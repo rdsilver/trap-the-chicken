@@ -1,0 +1,80 @@
+body {
+    background: white;
+}
+
+h1, h2 {
+    text-align: center;
+    font-family: "Gill Sans", sans-serif;
+}
+
+.boxes {
+    width: 100%;
+    text-align: center;
+}
+
+.row {
+    margin-top: 20px;
+}
+
+.square {
+    width: 20vw;
+    height: 20vw;
+    border: 1px solid black;
+    display: inline-block;
+    margin-right: 20px;
+    position: relative;
+    user-select: none;
+    max-width: 200px;
+    max-height: 200px;
+}
+
+.square.empty {
+    border: 1px solid white;
+}
+
+.square.empty:hover {
+    cursor: default;
+}
+
+.square:hover{
+    cursor: pointer;
+}
+
+.square:last-of-type {
+    margin-right: 0px;
+}
+
+@keyframes rainbow {
+    to {background-position:0 -200%}
+}
+
+.square.win {
+    background: 
+    linear-gradient(rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%) 
+    0 0/100% 200%;
+    animation: rainbow 2s linear infinite;
+}
+
+.symbol {
+    height: 100px;
+    width: 100px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+button {
+    display: block;
+    width: 200px;
+    height: 50px;
+    margin: 50px auto;
+}
+
+button[disabled]:hover {
+    cursor: not-allowed;
+}
+
+button:hover {
+    cursor: pointer;
+}
