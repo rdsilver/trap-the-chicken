@@ -78,3 +78,15 @@ button[disabled]:hover {
 button:hover {
     cursor: pointer;
 }
+
+#auto-check {
+    margin: auto;
+    text-align: center;
+}
+
+#auto-check input {
+    position: relative;
+    top: 2px;
+    height: 14px;
+    width: 14px;
+}

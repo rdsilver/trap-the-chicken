@@ -16,6 +16,10 @@ let levels = {
                ['.', '', '', '.'],
                ['.', '', '', '.'],
                ['.', '.', '.', '.']], maxPeeks: 2},
+    8: {grid: [['.', '.', '.', '.'],
+               ['.', '', '.', '.'],
+               ['.', '.', '', '.'],
+               ['.', '.', '.', '.']], maxPeeks: 2},
 }
 
 
@@ -75,8 +79,15 @@ function drawGrid() {
 
 function buttonCheck() {
     let disabled = grid.flat().filter(el => el === 'x').length < 1;
+    let autoCheck = !disabled && grid.flat().filter(el => el === 'x').length === maxPeeks && $('input').is(':checked');
 
     $('button').attr("disabled", disabled);
+
+    if (autoCheck) {
+        setTimeout(() => {
+            $('button').click();
+        }, 300)
+    }
 }
 
 function checkWin() {
