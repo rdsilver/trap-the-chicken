@@ -35,7 +35,7 @@ let levels = {
 }
 
 
-let grid = levels[currentLevel].grid;
+let grid = JSON.parse(JSON.stringify(levels[currentLevel].grid)); 
 let pastGrid = Array(grid.length).fill(0);
 let maxPeeks = levels[currentLevel].maxPeeks;
 
@@ -128,7 +128,7 @@ function checkWin() {
 
  function setLevel(newLevel) {
     currentLevel = newLevel;
-    grid = levels[currentLevel].grid;
+    grid = JSON.parse(JSON.stringify(levels[currentLevel].grid)); 
     maxPeeks = levels[currentLevel].maxPeeks;
     $('h2').empty().append('Level ' + currentLevel + ' - Max Peeks = ' + maxPeeks);
     drawGrid();
