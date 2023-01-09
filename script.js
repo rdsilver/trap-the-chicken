@@ -71,7 +71,7 @@ function drawGrid() {
             for(let j=0; j<row.length; j++) {
                 if (row[j] === '') {
                     $('.row:last').append(`
-                    <span class="empty">
+                    <span class="square empty">
                     </span>
                 `);
                 } else {
