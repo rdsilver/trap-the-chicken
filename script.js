@@ -179,7 +179,6 @@ $(document).on('click', '.level', function() {
 
 $(document).on('click', '#auto-check', function() {
     $('input').attr("checked", !$('input').attr("checked"));
-    console.log('hello');
 });
 
 $(document).on('click', 'button', function() {
