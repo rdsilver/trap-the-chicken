@@ -20,6 +20,10 @@ let levels = {
                ['.', '', '.', '.'],
                ['.', '.', '', '.'],
                ['.', '.', '.', '.']], maxPeeks: 2},
+    9: {grid: [['.', '.', '.', '.'],
+               ['.', '.', '.', '.'],
+               ['.', '.', '.', '.'],
+               ['.', '.', '.', '.']], maxPeeks: 4},
 }
 
 
@@ -35,8 +39,8 @@ let images = {
 
 $(function(){ 
     $('h2').empty().append('Level ' + currentLevel + ' - Max Peeks = ' + maxPeeks);
-
     drawGrid();
+    levelSelector();
 });
 
 
@@ -77,6 +81,12 @@ function drawGrid() {
     }
 }
 
+function levelSelector() {
+    for (let i=0; i<Object.keys(levels).length; i++) {
+        $('body').append(`<div class='level'>Level ${i + 1}</div>`);
+    }
+}
+
 function buttonCheck() {
     let disabled = grid.flat().filter(el => el === 'x').length < 1;
     let autoCheck = !disabled && grid.flat().filter(el => el === 'x').length === maxPeeks && $('input').is(':checked');
@@ -103,13 +113,13 @@ function checkWin() {
 
 
         setTimeout(() => {
-            nextLevel();
+            setLevel(currentLevel + 1);
         }, delay * (grid.flat().length + 1))
     }
  }
 
- function nextLevel() {
-    currentLevel++;
+ function setLevel(newLevel) {
+    currentLevel = newLevel;
     grid = levels[currentLevel].grid;
     maxPeeks = levels[currentLevel].maxPeeks;
     $('h2').empty().append('Level ' + currentLevel + ' - Max Peeks = ' + maxPeeks);
@@ -151,7 +161,20 @@ $(document).on('click', '.square', function() {
     buttonCheck();
 });
 
-$(document).on('click', 'button', function(e) {
+$(document).on('click', 'input', function() {
+    buttonCheck();
+});
+
+$(document).on('click', '.level', function() {
+    setLevel(parseInt($(this).text().split(' ')[1]));
+});
+
+$(document).on('click', '#auto-check', function() {
+    $('input').attr("checked", !$('input').attr("checked"));
+    console.log('hello');
+});
+
+$(document).on('click', 'button', function() {
     let isNestedArray = Array.isArray(grid[0]);
     let newGrid = [];
 

@@ -82,6 +82,8 @@ button:hover {
 #auto-check {
     margin: auto;
     text-align: center;
+    user-select: none;
+    cursor: pointer;
 }
 
 #auto-check input {
@@ -89,4 +91,20 @@ button:hover {
     top: 2px;
     height: 14px;
     width: 14px;
+}
+
+.level {
+    margin: 50px auto 0;
+    text-align: center;
+    color: blue;
+    cursor: pointer;
+    user-select: none;
+}
+
+.level:hover {
+    text-decoration: underline;
+}
+
+body > .level ~ .level {
+    margin: auto;
 }
