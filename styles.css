@@ -17,8 +17,8 @@ h1, h2 {
 }
 
 .square {
-    width: 20vw;
-    height: 20vw;
+    width: 15vw;
+    height: 15vw;
     border: 1px solid black;
     display: inline-block;
     margin-right: 20px;
@@ -29,8 +29,8 @@ h1, h2 {
 }
 
 .empty {
-    width: 20vw;
-    height: 20vw;
+    width: 15vw;
+    height: 15vw;
     border: 1px solid white;
     display: inline-block;
     margin-right: 20px;

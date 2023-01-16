@@ -1,8 +1,8 @@
 let currentLevel = 1;
 let levels = {
-    1: {grid:  ['.', '.'], maxPeeks: 1},
-    2: {grid: ['.', '.', '.', '.'], maxPeeks: 1},
-    3: {grid: ['.', '.', '.', '.', '.'], maxPeeks: 1},
+    1: {grid:  [['.', '.']], maxPeeks: 1},
+    2: {grid: [['.', '.', '.', '.']], maxPeeks: 1},
+    3: {grid: [['.', '.', '.', '.', '.']], maxPeeks: 1},
     4: {grid: [['.', '.'],
                ['.', '.']], maxPeeks: 2},
     5: {grid: [['.', '.', '.'],
@@ -28,15 +28,25 @@ let levels = {
                ['', '.', '.', ''],
                ['', '', '.', ''],
                ['.', '.', '.', '.']], maxPeeks: 2},
-    11: {grid: [['.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.']], maxPeeks: 5},
-    12: {grid: [['.', '.', '.', '.'],
+    11: {grid: [['k', 'k', 'k', 'k', 'k'],
+                ['k', 'k', 'k', 'k', 'k'],
+                ['k', 'k', 'k', 'k', 'k'],
+                ['k', 'k', 'k', 'k', 'k'],
+                ['k', 'k', 'k', 'k', 'k']], maxPeeks: 8},
+    12: {grid: [['s', 's', 's', 's', 's'],
+                ['s', 's', 's', 's', 's'],
+                ['s', 's', 's', 's', 's'],
+                ['s', 's', 's', 's', 's'],
+                ['s', 's', 's', 's', 's']], maxPeeks: 12},
+    13: {grid: [['.', '.', '.', '.'],
                ['', '.', '', '.'],
                ['', '.', '', '.'],
                ['.', '.', '.', '.']], maxPeeks: 2},
+}
+let pieceMoves = {
+    '.': [[0, -1], [0, 1], [1, 0], [-1, 0]],
+    'k': [[-2, -1], [-1, -2], [1, -2], [1, 2], [-2, 1], [2 ,1], [2, -1], [-1, 2]],
+    's': [[0, -1], [0, 1], [1, 0], [-1, 0], [0, -2], [0, 2], [2, 0], [-2, 0]],
 }
 
 
@@ -48,6 +58,8 @@ let images = {
     '.': "<img class='symbol' src='images/chicken.png' draggable='false'></img>",
     'x': "<img class='symbol' src='images/x.png' draggable='false'></img>",
     '-': "<img class='symbol' src='images/-.png' draggable='false'></img>",
+    'k': "<img class='symbol' src='images/knight.png' draggable='false'></img>",
+    's': "<img class='symbol' src='images/rooster.png' draggable='false'></img>",
 }
 
 $(function(){ 
@@ -57,39 +69,27 @@ $(function(){
 });
 
 
-function drawGrid() {
-    let isNestedArray = Array.isArray(grid[0]);
-    
+function drawGrid() {    
     $('.boxes').empty();
 
-    if (isNestedArray) {
-        for(let i=0; i<grid.length; i++) {
-            let row = grid[i];
+    for(let i=0; i<grid.length; i++) {
+        let row = grid[i];
 
-            $('.boxes').append(`<div class="row"> </div>`);
+        $('.boxes').append(`<div class="row"> </div>`);
 
-            for(let j=0; j<row.length; j++) {
-                if (row[j] === '') {
-                    $('.row:last').append(`
-                    <span class="square empty">
-                    </span>
-                `);
-                } else {
-                    $('.row:last').append(`
-                        <span class="square" id=${i+'|'+j}>
-                            ${images[row[j]]}
-                        </span>
-                    `);
-                }
-            }
-        }
-    } else {
-        for(let i=0; i<grid.length; i++) {
-            $('.boxes').append(`
-                <span class="square" id=${i}>
-                    ${images[grid[i]]}
+        for(let j=0; j<row.length; j++) {
+            if (row[j] === '') {
+                $('.row:last').append(`
+                <span class="square empty">
                 </span>
             `);
+            } else {
+                $('.row:last').append(`
+                    <span class="square" id=${i+'|'+j}>
+                        ${images[row[j]]}
+                    </span>
+                `);
+            }
         }
     }
 }
@@ -140,34 +140,17 @@ function checkWin() {
  }
 
 $(document).on('click', '.square', function() {
-    let isNestedArray = Array.isArray(grid[0]);
+    let row = parseInt($(this)[0].id.split('|')[0]);
+    let column = parseInt($(this)[0].id.split('|')[1]);
+    let canCheckMore = grid.flat().filter(el => el === 'x').length < maxPeeks;
 
-    if (isNestedArray) {
-        let row = parseInt($(this)[0].id.split('|')[0]);
-        let column = parseInt($(this)[0].id.split('|')[1]);
-        let canCheckMore = grid.flat().filter(el => el === 'x').length < maxPeeks;
-
-        switch (grid[row][column]){
-            case '.': 
-                if (canCheckMore) {
-                    grid[row][column] = 'x';
-                }
-        }
-    } else {
-        let clicked = parseInt($(this)[0].id);
-        let canCheckMore = grid.filter(el => el === 'x').length < maxPeeks;
-
-        switch (grid[clicked]){
-            case '.': 
-                pastGrid = [...grid];
-                if (canCheckMore) {
-                  grid[clicked] = 'x';
-                }
-                break;
-            case 'x':
-                grid[clicked] = pastGrid[clicked];
-                break;
-        }
+    switch (grid[row][column]){
+        case '.': 
+        case 'k':
+        case 's':
+            if (canCheckMore) {
+                grid[row][column] = 'x';
+            }
     }
 
     drawGrid();
@@ -187,11 +170,16 @@ $(document).on('click', '#auto-check', function() {
 });
 
 $(document).on('click', 'button', function() {
-    let isNestedArray = Array.isArray(grid[0]);
-    let newGrid = [];
+    let newGrid = JSON.parse(JSON.stringify(grid));
+    
+    for(let row=0; row<grid.length; row++) {
+        for(let column=0; column<grid[row].length; column++) { 
+            newGrid[row][column] = 'placeholder';
+        }
+    }
 
-    if (isNestedArray) {
-        newGrid = JSON.parse(JSON.stringify(grid));
+    for (const [key, value] of Object.entries(pieceMoves)) {
+        let neighbors = value;
 
         for(let row=0; row<grid.length; row++) {
             for(let column=0; column<grid[row].length; column++) {
@@ -200,48 +188,34 @@ $(document).on('click', 'button', function() {
                     continue;
                 }
 
-                let neighbors = [[0, -1], [0, 1], [1, 0], [-1, 0]];
-                let hasNeighbor = false;
-
-                neighbors.forEach(neighbor => {
-                    if (row + neighbor[0] >= 0 && row + neighbor[0] < grid.length){
-                        if (column + neighbor[1] >= 0 && column + neighbor[1] < grid[row].length){
-                            if (grid[row+neighbor[0]][column+neighbor[1]] === '.') {
-                                hasNeighbor = true;
+                let hasNeighbor = neighbors.some(neighbor => {
+                    if (row + neighbor[0] >= 0 && row + neighbor[0] < grid.length) {
+                        if (column + neighbor[1] >= 0 && column + neighbor[1] < grid[row].length) {
+                            if (grid[row+neighbor[0]][column+neighbor[1]] === key) {
+                                return true;
                             }
                         }
                     }
+
+                    return false;
                 });
 
                 if (hasNeighbor) {
-                    newGrid[row][column] = '.';
-                } else {
-                    newGrid[row][column] = '-';
+                    newGrid[row][column] = key;
                 }
             }
         }
-    } else {
-        newGrid = Array(grid.length).fill(0);
+    }
 
-        for(let i=0; i<grid.length; i++) {
-            let leftChicken = false;
-            let rightChicken = false;
-
-            if (i-1 >= 0 && grid[i-1] === '.') {
-                leftChicken = true;
-            }
-
-            if (i+1 < grid.length && grid[i+1] === '.') {
-                rightChicken = true;
-            }
-
-            if (leftChicken || rightChicken) {
-                newGrid[i] = '.';
-            } else {
-                newGrid[i] = '-';
+    for(let row=0; row<grid.length; row++) {
+        for(let column=0; column<grid[row].length; column++) { 
+            if (newGrid[row][column] === 'placeholder') {
+                newGrid[row][column] = '-';
+                continue;
             }
         }
     }
+   
 
     grid = newGrid;
     drawGrid();
