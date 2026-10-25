@@ -34,7 +34,7 @@
             <p class="eyebrow">Level <span id="level-number">1</span></p>
             <h2 id="level-name">Two Coops</h2>
           </div>
-          <div class="night-badge" aria-live="polite">
+          <div class="night-badge" aria-live="polite" aria-atomic="true">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
             <span>Night <strong id="night-number">1</strong></span>
           </div>
@@ -76,8 +76,8 @@
             <p id="win-text"></p>
           </div>
           <div class="win-actions">
-            <button type="button" class="btn" id="replay-btn">Play again</button>
-            <button type="button" class="btn btn-primary" id="next-btn">
+            <button type="button" class="btn" id="replay-btn" aria-describedby="win-title win-text">Play again</button>
+            <button type="button" class="btn btn-primary" id="next-btn" aria-describedby="win-title win-text">
               Next level
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
             </button>
@@ -119,7 +119,7 @@
 
     <dialog class="help" id="help" aria-labelledby="help-title">
       <form method="dialog">
-        <h2 id="help-title">How to play</h2>
+        <h2 id="help-title" tabindex="-1" autofocus>How to play</h2>
         <ol class="steps">
           <li><strong>One chicken is hiding in one of the coops.</strong> You can't see which one.</li>
           <li>
@@ -144,7 +144,7 @@
             Watch a quick video explanation
           </a>
         </p>
-        <button class="btn btn-primary" value="close" autofocus>Let's play</button>
+        <button class="btn btn-primary" value="close">Let's play</button>
       </form>
     </dialog>
 

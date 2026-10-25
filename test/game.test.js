@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { PIECES, movesFrom, parseLayout, playNight, startingPossibilities } from '../src/game.js';
 import { LEVELS } from '../src/levels.js';
 import { solve } from '../tools/solve.js';
-import { SOLUTIONS } from './solutions.js';
+import { SOLUTIONS } from '../tools/solutions.js';
 
 const sorted = (set) => [...set].sort((a, b) => a - b);
 

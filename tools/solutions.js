@@ -1,4 +1,4 @@
-// One shortest solution per level, found by tools/solve.js. Each entry is a list of
+// One shortest solution per level, found by tools/solve.js and checked by the tests. Each entry is a list of
 // nights, and each night lists the cell indices (row * cols + col) to search.
 // Spoilers, obviously.
 export const SOLUTIONS = [

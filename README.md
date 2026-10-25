@@ -23,13 +23,14 @@ Then open http://localhost:8000.
 
 ## Project layout
 
-| Path               | What it is                                                         |
-| ------------------ | ------------------------------------------------------------------ |
-| `src/game.js`      | The rules: pieces, moves, and resolving a night. No DOM.           |
-| `src/levels.js`    | Level layouts, searches per night, and par.                        |
-| `src/main.js`      | The UI: rendering, the night animation, saving progress.           |
-| `tools/solve.js`   | Finds the fewest nights to guarantee a catch (and one way to do it). |
-| `test/`            | Tests, run with Node's built-in test runner.                       |
+| Path                 | What it is                                                           |
+| -------------------- | -------------------------------------------------------------------- |
+| `src/game.js`        | The rules: pieces, moves, and resolving a night. No DOM.             |
+| `src/levels.js`      | Level layouts, searches per night, and par.                          |
+| `src/main.js`        | The UI: rendering, the night animation, saving progress.             |
+| `tools/solve.js`     | Finds the fewest nights to guarantee a catch (and one way to do it). |
+| `tools/solutions.js` | One shortest solution per level, checked by the tests.               |
+| `test/`              | Tests, run with Node's built-in test runner.                         |
 
 ## Adding a level
 
@@ -40,7 +41,7 @@ Add an entry to `src/levels.js`. In `layout`, `o` is a coop and `-` is empty gro
 ```
 
 Then find its par and a solution with `npm run solve -- <level number>`, put the solution in
-`test/solutions.js`, and run `npm test`. The 5×5 levels take a while to solve (up to a couple of minutes).
+`tools/solutions.js`, and run `npm test`. The 5×5 levels take a while to solve (up to a couple of minutes).
 
 ## Tests
 

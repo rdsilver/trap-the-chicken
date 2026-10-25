@@ -4,7 +4,7 @@
   --bg: #f7f1e5;
   --surface: #fffbf3;
   --ink: #2a1f16;
-  --muted: #76675a;
+  --muted: #6b5d50;
   --line: #e6d9c4;
 
   --coop: #ece2d1;
@@ -16,12 +16,12 @@
   --search: #2563eb;
   --search-soft: rgb(37 99 235 / 0.16);
   --spotlight: rgb(255 255 255 / 0.75);
-  --stamp: #d6402b;
+  --stamp: #b8321f;
 
-  --accent: #d9482b;
-  --accent-hover: #c23c21;
+  --accent: #b93a20;
+  --accent-hover: #a83219;
   --accent-ink: #fff;
-  --good: #1f8a52;
+  --good: #1a7346;
 
   --radius: 14px;
   --font-display: 'Fredoka', ui-rounded, system-ui, sans-serif;
@@ -49,6 +49,7 @@
 
     --accent: #ec6448;
     --accent-hover: #f27b62;
+    --accent-ink: #12141c;
     --good: #4cc584;
   }
 }
@@ -165,7 +166,7 @@ svg {
   padding: 3px;
   border-radius: 50%;
   background: var(--good);
-  color: #fff;
+  color: var(--surface);
   stroke-width: 3.5;
 }
 
@@ -173,6 +174,17 @@ svg {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--bg);
+}
+
+/* The knight art is a black silhouette; flip it to stay visible on the current pill. */
+.level-pill[aria-current] img[data-piece='knight'] {
+  filter: invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .level-pill[aria-current] img[data-piece='knight'] {
+    filter: none;
+  }
 }
 
 /* ---------- Layout ---------- */
@@ -279,7 +291,7 @@ svg {
 }
 
 .status {
-  min-height: 3em;
+  min-height: 4.5em;
   margin: 18px 0;
   font-size: 1.05rem;
 }
@@ -430,7 +442,7 @@ svg {
   transform: none;
 }
 
-.coop.hint-source {
+.coop.hint-source:not(:focus-visible) {
   outline: 2px dashed var(--muted);
   outline-offset: 3px;
 }
@@ -528,6 +540,7 @@ svg {
   stroke-width: var(--stroke, 3px);
   stroke-dasharray: var(--len);
   stroke-dashoffset: var(--len);
+  opacity: 0;
   animation: draw 0.45s ease-out var(--delay) forwards;
 }
 
@@ -540,6 +553,7 @@ svg {
 
 .arrows.static .trail line {
   stroke-dashoffset: 0;
+  opacity: 1;
   animation: none;
 }
 
@@ -549,7 +563,8 @@ svg {
 }
 
 @keyframes draw {
-  to { stroke-dashoffset: 0; }
+  from { opacity: 1; }
+  to { opacity: 1; stroke-dashoffset: 0; }
 }
 
 @keyframes appear {
@@ -609,7 +624,16 @@ svg {
 
 .win-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.win-actions .btn {
+  flex: 1 1 auto;
+}
+
+.win-actions .btn-primary {
+  min-width: 0;
 }
 
 /* ---------- Legend and controls ---------- */
@@ -697,15 +721,16 @@ svg {
   height: 18px;
 }
 
-.btn:hover:not(:disabled) {
+.btn:hover:not(:disabled, [aria-disabled='true']) {
   border-color: var(--muted);
 }
 
-.btn:active:not(:disabled) {
+.btn:active:not(:disabled, [aria-disabled='true']) {
   transform: translateY(1px);
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -724,7 +749,7 @@ svg {
   color: var(--accent-ink);
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled, [aria-disabled='true']) {
   border-color: transparent;
   background: var(--accent-hover);
 }
@@ -947,12 +972,20 @@ button.thumb:not(:disabled):hover {
 
 .help {
   width: min(520px, calc(100vw - 32px));
-  padding: 28px;
+  padding: 0;
   border: 0;
   border-radius: 22px;
   background: var(--surface);
   color: var(--ink);
   box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+}
+
+.help form {
+  padding: 28px;
+}
+
+.help h2:focus {
+  outline: none;
 }
 
 .help::backdrop {

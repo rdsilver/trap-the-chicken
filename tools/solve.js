@@ -7,6 +7,9 @@
 // Moving is monotone (a smaller set never spreads to a bigger one), so any state that
 // is a superset of another state at the same depth can be dropped.
 
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { LEVELS } from '../src/levels.js';
 import { movesFrom, parseLayout } from '../src/game.js';
 
@@ -82,7 +85,9 @@ function popcount(n) {
   return count;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run as a script (not imported by the tests). Compare real paths so spaces, symlinks and
+// Windows paths all work.
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const wanted = process.argv.slice(2).map(Number);
   LEVELS.forEach((level, i) => {
     if (wanted.length && !wanted.includes(i + 1)) return;

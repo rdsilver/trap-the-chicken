@@ -25,9 +25,18 @@ function loadSaved() {
 
 function persist() {
   try {
+    // Another tab may have saved progress since this one loaded, so don't clobber it.
+    mergeBest(JSON.parse(localStorage.getItem(STORAGE_KEY))?.best);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   } catch {
     // Private browsing or storage disabled: progress just won't be remembered.
+  }
+}
+
+// Keep the better (fewer nights) score for each level.
+function mergeBest(other = {}) {
+  for (const [level, nights] of Object.entries(other)) {
+    if (!saved.best[level] || nights < saved.best[level]) saved.best[level] = nights;
   }
 }
 
@@ -51,6 +60,8 @@ let cellEls = new Map(); // cell index -> coop button
 let arrowMoves = null; // moves currently drawn on the board, redrawn on resize
 let run = 0; // bumped on every reset so an in-flight night animation knows to stop
 let nudgeTimer;
+let autoSearchTimer;
+let statusHtml = '';
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -92,6 +103,7 @@ const els = {
 
 function startLevel(index) {
   run++;
+  clearTimeout(autoSearchTimer);
   state.levelIndex = index;
   state.level = LEVELS[index];
   state.board = parseLayout(state.level.layout);
@@ -158,25 +170,29 @@ function render() {
   for (const [cell, el] of cellEls) {
     const isPossible = !won && possible.has(cell);
     const isSelected = selected.has(cell);
+    const isFound = won && state.found.has(cell);
     el.classList.remove('searching', 'stamp', 'leaving', 'arrived');
     el.classList.toggle('possible', isPossible);
     el.classList.toggle('selected', isSelected);
-    el.classList.toggle('found', won && state.found.has(cell));
+    el.classList.toggle('found', isFound);
     el.setAttribute('aria-pressed', isSelected);
-    el.setAttribute('aria-label', describeCell(cell, isPossible, isSelected));
+    el.setAttribute('aria-label', describeCell(cell, { isPossible, isSelected, isFound }));
   }
   els.board.classList.toggle('won', won);
   els.board.classList.toggle('busy', phase === 'animating');
 
-  els.night.textContent = state.nights.length;
+  // Only touch live regions when their text changes, so screen readers don't repeat them.
+  const night = String(state.nights.length);
+  if (els.night.textContent !== night) els.night.textContent = night;
   if (phase !== 'animating') setStatus(statusText());
 
+  // aria-disabled rather than disabled, so a focused button keeps focus while it's unavailable.
   const count = selected.size;
-  els.search.disabled = phase !== 'planning' || count === 0;
+  els.search.setAttribute('aria-disabled', phase !== 'planning' || count === 0);
   els.searchLabel.textContent = count
     ? `Search ${count} ${plural(count, 'coop')}`
     : `Pick up to ${level.searches} ${plural(level.searches, 'coop')}`;
-  els.undo.disabled = phase === 'animating' || (!won && state.nights.length < 2);
+  els.undo.setAttribute('aria-disabled', phase === 'animating' || (!won && state.nights.length < 2));
   els.controls.hidden = won;
   els.win.hidden = !won;
   if (won) renderWin();
@@ -186,9 +202,10 @@ function render() {
   renderTimeline();
 }
 
-function describeCell(cell, isPossible, isSelected) {
+function describeCell(cell, { isPossible, isSelected, isFound }) {
   const [row, col] = toRowCol(state.board, cell);
   const where = `Row ${row + 1}, column ${col + 1}`;
+  if (isFound) return `${where}: the chicken was caught here`;
   if (isSelected) return `${where}: searching tonight`;
   if (isPossible) return `${where}: the chicken could be here`;
   return `${where}: ruled out`;
@@ -196,7 +213,10 @@ function describeCell(cell, isPossible, isSelected) {
 
 function statusText() {
   const { level, phase, nights } = state;
-  if (phase === 'won') return `<strong>Trapped!</strong> There's nowhere left for it to hide.`;
+  if (phase === 'won') {
+    return `<strong>Trapped in ${nights.length} ${plural(nights.length, 'night')}!</strong>
+      There's nowhere left for it to hide.`;
+  }
 
   const n = tonight().possible.size;
   const where =
@@ -213,6 +233,8 @@ function statusText() {
 function setStatus(html) {
   clearTimeout(nudgeTimer);
   els.status.classList.remove('nudge');
+  if (html === statusHtml) return;
+  statusHtml = html;
   els.status.innerHTML = html;
 }
 
@@ -254,28 +276,36 @@ function renderPiece() {
   els.movesRule.textContent = piece.rule;
 }
 
-function renderLevelList() {
+// The pills are built once and updated in place, so a focused pill keeps focus.
+function buildLevelList() {
   els.levelList.replaceChildren(
     ...LEVELS.map((level, i) => {
-      const best = saved.best[i + 1];
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'level-pill';
       button.dataset.level = i;
       button.title = level.name;
-      button.classList.toggle('done', Boolean(best));
-      if (i === state.levelIndex) button.setAttribute('aria-current', 'page');
-      button.setAttribute('aria-label', `Level ${i + 1}: ${level.name}${best ? `, solved in ${best} nights` : ''}`);
-      button.innerHTML = `
-        ${level.piece === 'chicken' ? '' : `<img src="${PIECES[level.piece].image}" alt="" data-piece="${level.piece}">`}
-        <span>${i + 1}</span>
-        ${best ? ICONS.check : ''}`;
-
       const item = document.createElement('li');
       item.append(button);
       return item;
     }),
   );
+}
+
+function renderLevelList() {
+  for (const button of els.levelList.querySelectorAll('.level-pill')) {
+    const i = Number(button.dataset.level);
+    const level = LEVELS[i];
+    const best = saved.best[i + 1];
+    button.classList.toggle('done', Boolean(best));
+    if (i === state.levelIndex) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+    button.setAttribute('aria-label', `Level ${i + 1}: ${level.name}${best ? `, solved in ${best} nights` : ''}`);
+    button.innerHTML = `
+      ${level.piece === 'chicken' ? '' : `<img src="${PIECES[level.piece].image}" alt="" data-piece="${level.piece}">`}
+      <span>${i + 1}</span>
+      ${best ? ICONS.check : ''}`;
+  }
 
   const current = els.levelList.querySelector('[aria-current]');
   els.levelList.scrollTo({
@@ -355,11 +385,10 @@ function renderWin() {
   const nights = state.nights.length;
   const isLast = levelIndex === LEVELS.length - 1;
 
-  els.winTitle.textContent = `Trapped in ${nights} ${plural(nights, 'night')}!`;
+  // The status line already says how many nights it took.
+  els.winTitle.textContent = nights <= level.par ? "That's par!" : `Par is ${level.par} nights`;
   els.winText.textContent =
-    nights <= level.par
-      ? "That's par: the fewest nights possible. Nicely done!"
-      : `Par is ${level.par} nights. Can you catch it faster?`;
+    nights <= level.par ? 'The fewest nights possible. Nicely done!' : 'Can you catch it faster?';
   if (isLast) els.winText.textContent += ' That was the last level.';
   els.next.hidden = isLast;
 }
@@ -461,6 +490,7 @@ function clearArrows() {
 function toggleCell(cell) {
   if (state.phase !== 'planning') return;
   const { selected, level } = state;
+  clearTimeout(autoSearchTimer);
   clearArrows();
 
   if (selected.has(cell)) {
@@ -476,17 +506,16 @@ function toggleCell(cell) {
   }
   render();
 
-  if (saved.settings.autoSearch && selected.size === level.searches) {
-    const myRun = run;
-    setTimeout(() => {
-      if (myRun === run && state.phase === 'planning' && state.selected.size === level.searches) playTonight();
-    }, 400);
-  }
+  // All picks are used once every allowed search is placed, or every possible coop is picked.
+  const picks = Math.min(level.searches, tonight().possible.size);
+  if (saved.settings.autoSearch && selected.size === picks) autoSearchTimer = setTimeout(playTonight, 400);
 }
 
 async function playTonight() {
-  if (state.phase !== 'planning' || state.selected.size === 0) return;
+  if (state.phase !== 'planning') return;
+  if (state.selected.size === 0) return nudge('Pick at least one coop to search first.');
 
+  clearTimeout(autoSearchTimer);
   const myRun = run;
   const animate = saved.settings.animate && !reducedMotion.matches;
   // Waits between steps, and reports whether we should keep going.
@@ -544,6 +573,8 @@ async function playTonight() {
 }
 
 function finishNight(searched, result, possible) {
+  // Winning hides the controls; if focus was there, hand it to the win panel's buttons.
+  const focusInControls = els.controls.contains(document.activeElement);
   const last = state.nights.length - 1;
   state.nights = state.nights.map((night, i) => (i === last ? { ...night, searched } : night));
   state.selected = new Set();
@@ -564,10 +595,12 @@ function finishNight(searched, result, possible) {
   }
 
   render();
+  if (state.phase === 'won' && focusInControls) (els.next.hidden ? els.replay : els.next).focus();
 }
 
 function rewindTo(index) {
   if (state.phase === 'animating') return;
+  clearTimeout(autoSearchTimer);
   const night = state.nights[index];
   state.nights = [...state.nights.slice(0, index), { possible: night.possible, searched: null }];
   state.selected = new Set(night.searched ?? []);
@@ -622,11 +655,26 @@ function focusCell(cell, moveFocus) {
   if (moveFocus) cellEls.get(cell).focus();
 }
 
+// Focus the board's current coop (the one reachable with Tab).
+function focusBoard() {
+  [...cellEls.values()].find((el) => el.tabIndex === 0)?.focus();
+}
+
 els.search.addEventListener('click', playTonight);
 els.undo.addEventListener('click', undo);
 els.restart.addEventListener('click', () => startLevel(state.levelIndex));
-els.replay.addEventListener('click', () => startLevel(state.levelIndex));
-els.next.addEventListener('click', () => startLevel(Math.min(state.levelIndex + 1, LEVELS.length - 1)));
+
+// These buttons vanish with the win panel, so send focus to the new board.
+for (const [button, nextLevel] of [
+  [els.replay, () => state.levelIndex],
+  [els.next, () => Math.min(state.levelIndex + 1, LEVELS.length - 1)],
+]) {
+  button.addEventListener('click', () => {
+    const hadFocus = button === document.activeElement;
+    startLevel(nextLevel());
+    if (hadFocus) focusBoard();
+  });
+}
 
 els.levelList.addEventListener('click', (event) => {
   const pill = event.target.closest('.level-pill');
@@ -635,7 +683,11 @@ els.levelList.addEventListener('click', (event) => {
 
 els.timeline.addEventListener('click', (event) => {
   const thumb = event.target.closest('button.thumb');
-  if (thumb && !thumb.disabled) rewindTo(Number(thumb.dataset.night));
+  if (!thumb || thumb.disabled) return;
+  // The timeline is rebuilt on rewind, so move focus to the board where the next move happens.
+  const hadFocus = thumb === document.activeElement;
+  rewindTo(Number(thumb.dataset.night));
+  if (hadFocus) focusBoard();
 });
 
 for (const input of document.querySelectorAll('[data-setting]')) {
@@ -656,6 +708,18 @@ els.help.addEventListener('close', () => {
   persist();
 });
 
+// Pick up scores saved in other tabs.
+window.addEventListener('storage', (event) => {
+  if (event.key !== STORAGE_KEY) return;
+  try {
+    mergeBest(JSON.parse(event.newValue)?.best);
+  } catch {
+    return;
+  }
+  renderLevelList();
+  renderMeta();
+});
+
 window.addEventListener('hashchange', () => {
   const index = levelFromHash();
   if (index !== null && index !== state.levelIndex) startLevel(index);
@@ -671,5 +735,6 @@ new ResizeObserver(() => {
 // ---------- Start ----------
 
 const firstUnsolved = LEVELS.findIndex((_, i) => !saved.best[i + 1]);
+buildLevelList();
 startLevel(levelFromHash() ?? Math.max(firstUnsolved, 0));
 if (!saved.seenHelp) els.help.showModal();
